@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buyer Cost Estimator | IREP</title>
+<link href="https://fonts.googleapis.com/css2?family=Karla:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --charcoal:#25282a;--slate:#5b6770;--light-gray:#c1c6c8;
+  --blue:#0057b8;--blue-light:#e8f0fb;
+  --white:#ffffff;--bg:#f0f2f4;--card:#ffffff;--border:#dde1e3;
+  --green:#1a7f5a;--green-light:#e6f4ee;
+  --amber:#9a5000;--amber-light:#fdf0dc;
+  --shadow:0 1px 4px rgba(37,40,42,.07),0 5px 18px rgba(37,40,42,.06);
+  --shadow-lg:0 6px 32px rgba(37,40,42,.13);
+}
+body{font-family:'Karla',sans-serif;background:var(--bg);color:var(--charcoal);min-height:100vh;font-size:15px;line-height:1.5}
+
+.hdr{background:var(--charcoal);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 36px;position:sticky;top:0;z-index:200;border-bottom:2.5px solid var(--blue)}
+.hdr-left{display:flex;align-items:center;gap:14px}
+.logo{font-size:16px;font-weight:800;letter-spacing:.12em;color:#fff;text-transform:uppercase}
+.logo em{color:var(--blue);font-style:normal}
+.hdiv{width:1px;height:18px;background:rgba(255,255,255,.15)}
+.hdr-tool{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--light-gray)}
+.hdr-note{font-size:11px;color:rgba(193,198,200,.5);font-style:italic}
+
+.wrap{max-width:1400px;margin:0 auto;padding:30px 22px 70px;display:grid;grid-template-columns:340px 1fr;gap:26px;align-items:start}
+
+.card{background:var(--card);border-radius:10px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px}
+.card:last-child{margin-bottom:0}
+.ch{padding:15px 20px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.ci{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.ci-b{background:var(--blue-light)}.ci-g{background:var(--green-light)}.ci-a{background:var(--amber-light)}
+/* card header title - was 12px, now 15px (~25% up) */
+.ct{font-size:15px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--charcoal)}
+.cb{padding:18px 20px}
+
+.fld{margin-bottom:15px}.fld:last-child{margin-bottom:0}
+/* field labels - was 11px, stays 11px (minimum) */
+.fld label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--slate);margin-bottom:5px}
+.iwrap{position:relative}
+.ipfx,.isfx{position:absolute;top:50%;transform:translateY(-50%);font-size:13px;font-weight:600;color:var(--slate);pointer-events:none}
+.ipfx{left:11px}.isfx{right:11px}
+input[type=text],input[type=number],select{width:100%;height:40px;border:1.5px solid var(--border);border-radius:7px;font-family:'Karla',sans-serif;font-size:15px;font-weight:500;color:var(--charcoal);background:#fafbfc;padding:0 12px;transition:border-color .15s,box-shadow .15s;outline:none;-webkit-appearance:none}
+.pfx{padding-left:32px}.sfx{padding-right:26px}
+input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,87,184,.11);background:#fff}
+select{cursor:pointer}
+
+.tgrp{display:flex;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;background:#fafbfc}
+.tbtn{flex:1;height:40px;border:none;background:transparent;font-family:'Karla',sans-serif;font-size:13.5px;font-weight:700;color:var(--slate);cursor:pointer;transition:background .15s,color .15s}
+.tbtn.on{background:var(--blue);color:#fff}
+.tbtn:not(.on):hover{background:var(--blue-light);color:var(--blue)}
+
+.fin{margin-top:15px;padding-top:15px;border-top:1px dashed var(--border);display:none}
+.fin.vis{display:block}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.slwrap{display:flex;align-items:center;gap:10px}
+input[type=range]{flex:1;-webkit-appearance:none;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;background:var(--blue);border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,87,184,.3);cursor:pointer}
+.sval{min-width:50px;height:30px;background:var(--blue-light);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--blue)}
+
+/* Checkbox rows */
+.chk-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #f2f3f4}
+.chk-item:last-child{border-bottom:none}
+.chk-item input[type=checkbox]{width:16px;height:16px;margin-top:3px;cursor:pointer;accent-color:var(--blue);flex-shrink:0}
+.chk-body{flex:1;min-width:0}
+.chk-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
+.chk-label{font-size:14px;font-weight:500;color:var(--charcoal);line-height:1.3}
+.chk-note{font-size:11px;color:var(--slate);font-style:italic;margin-top:2px}
+.chk-cost-row{margin-top:8px;display:none}
+.chk-cost-row.vis{display:block}
+
+.badge{display:inline-block;padding:1px 7px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-left:5px;vertical-align:middle;white-space:nowrap}
+.b-opt{background:#eef0f1;color:var(--slate)}
+.b-ldr{background:var(--blue-light);color:var(--blue)}
+
+/* Section divider inside left panel */
+.sec-div{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--light-gray);padding:10px 0 4px;border-top:1px solid var(--border);margin-top:6px}
+.sec-div.first{border-top:none;padding-top:0;margin-top:0}
+
+/* Results */
+.res-cols{display:flex;flex-direction:column;gap:18px}
+.empty{padding:40px 20px;text-align:center;color:var(--slate)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty-txt{font-size:14px;font-weight:500}
+
+/* Loan stats bar */
+.lstat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.lstat{background:var(--blue-light);border-radius:8px;padding:12px 14px;text-align:center}
+.lstat-v{font-size:16px;font-weight:800;color:var(--blue);display:block}
+.lstat-l{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);margin-top:2px;display:block}
+
+/* Range header */
+.rng-hdr{display:flex;justify-content:flex-end;gap:16px;margin-bottom:8px}
+.rng-hdr span{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+.rh-lo{color:var(--green)}.rh-hi{color:var(--amber)}
+
+/* Line items */
+.li{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f2f3;gap:8px}
+.li:last-child{border-bottom:none}
+.li-left{flex:1;min-width:0}
+.li-name{font-size:14px;font-weight:500;color:var(--charcoal)}
+.li-sub{font-size:11px;color:var(--slate);font-style:italic;margin-top:1px}
+.li-vals{display:flex;gap:16px;flex-shrink:0}
+.li-val{font-size:14px;font-weight:700;min-width:82px;text-align:right}
+.v-lo{color:var(--green)}.v-hi{color:var(--amber)}.v-fix{color:var(--charcoal)}
+.li-na{font-size:11px;color:var(--light-gray);font-style:italic;text-align:right;min-width:82px}
+.li-enter{font-size:11px;color:var(--amber);font-weight:600;text-align:right;min-width:82px}
+
+/* Subtotal row */
+.sub-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f6f7f8;border-radius:7px;margin-top:8px}
+.sub-lbl{font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--charcoal)}
+.sub-vals{display:flex;gap:16px}
+.sub-v{font-size:15px;font-weight:800;min-width:82px;text-align:right}
+.sv-lo{color:var(--green)}.sv-hi{color:var(--amber)}
+
+/* ── SUMMARY TILES ── */
+.summary-bar{display:grid;gap:10px;margin-bottom:0}
+.summary-bar.tiles-4{grid-template-columns:repeat(4,1fr)}
+.summary-bar.tiles-5{grid-template-columns:repeat(5,1fr)}
+.stile{background:var(--charcoal);border-radius:10px;padding:16px 18px 18px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:4px;min-width:0}
+.stile-total{background:var(--blue);border-radius:10px;padding:16px 18px 18px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:4px;min-width:0}
+.stile-icon{font-size:16px;margin-bottom:4px;display:block}
+.stile-label{font-size:16px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:rgba(193,198,200,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stile-total .stile-label{color:rgba(255,255,255,.85)}
+.stile-val-wrap{margin-top:8px}
+.stile-val{font-size:24px;font-weight:800;color:#fff;display:block;white-space:nowrap}
+.stile-val.lo{color:#4dd9a0}
+.stile-val.hi{font-size:16px;font-weight:700;color:#fbbf24;margin-top:4px;display:block}
+.stile-val.fixed{color:#fff}
+.stile-range-hdr{display:flex;gap:6px;margin-bottom:2px}
+.stile-rh{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+.srh-lo{color:rgba(77,217,160,.55)}.srh-hi{color:rgba(251,191,36,.55)}
+
+.disc{padding:14px 18px;background:var(--card);border-radius:8px;border-left:3px solid var(--light-gray);font-size:11px;color:var(--slate);line-height:1.75;box-shadow:var(--shadow)}
+
+@media(max-width:880px){.wrap{grid-template-columns:1fr}.hdr{padding:0 18px}.hdr-note{display:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.res-cols>*{animation:fadeUp .28s ease both}
+.res-cols>*:nth-child(1){animation-delay:.03s}
+.res-cols>*:nth-child(2){animation-delay:.08s}
+.res-cols>*:nth-child(3){animation-delay:.13s}
+.res-cols>*:nth-child(4){animation-delay:.18s}
+.res-cols>*:nth-child(5){animation-delay:.23s}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-left">
+    <div class="logo">IR<em>EP</em></div>
+    <div class="hdiv"></div>
+    <div class="hdr-tool">Buyer Cost Estimator</div>
+  </div>
+  <div class="hdr-note">Estimates only — not a commitment to lend or a closing disclosure</div>
+</header>
+
+<div class="wrap">
+
+  <!-- ═══ LEFT INPUTS ═══ -->
+  <div>
+
+    <div class="card" style="border:2px solid var(--blue)">
+      <div class="ch" style="background:var(--blue-light)"><div class="ci ci-b">🏢</div><div class="ct">Purchase Details</div><span style="margin-left:auto;font-size:11px;font-weight:700;color:var(--blue);letter-spacing:.04em">START HERE</span></div>
+      <div class="cb">
+        <div class="fld">
+          <label style="color:var(--blue)">Purchase Price</label>
+          <div class="iwrap"><input type="text" id="purchasePrice" placeholder="Enter purchase price" oninput="fmtPrice(this)" style="border-color:var(--blue);font-size:16px;font-weight:600;padding-left:12px"></div>
+        </div>
+        <div class="fld">
+          <label>Financing</label>
+          <div class="tgrp">
+            <button class="tbtn on" id="btnCash" onclick="setFin(false)">All Cash</button>
+            <button class="tbtn" id="btnLoan" onclick="setFin(true)">Financing</button>
+          </div>
+        </div>
+        <div class="fin" id="finSection">
+          <div class="fld">
+            <label>Down Payment — <span id="dpDollar" style="font-weight:800;color:var(--blue)"></span></label>
+            <div class="slwrap">
+              <input type="range" id="dpSlider" min="10" max="50" step="5" value="25" oninput="syncSlider()">
+              <div class="sval" id="dpPct">25%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div class="ci ci-a">🔍</div><div class="ct">Due Diligence</div></div>
+      <div class="cb" id="ddPanel"></div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div class="ci ci-g">📋</div><div class="ct">Closing Costs</div></div>
+      <div class="cb" id="clPanel"></div>
+    </div>
+
+    <div class="card" id="lnInputCard" style="display:none">
+      <div class="ch"><div class="ci ci-b">🏦</div><div class="ct">Lender Fees</div></div>
+      <div class="cb" id="lnPanel"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══ RIGHT RESULTS ═══ -->
+  <div class="res-cols" id="results">
+    <div class="card"><div class="empty"><div class="empty-icon">📊</div><div class="empty-txt">Enter a purchase price to see your estimated costs</div></div></div>
+  </div>
+
+</div>
+
+<script>
+let isFinanced = false;
+
+// ── DUE DILIGENCE ──────────────────────────────────────────────────────────
+const ddItems = [
+  { id:'inspection',  label:'Property Inspection',        checked:true,  optional:false, lenderReq:false, userCost:false, note:'Physical inspection by a licensed commercial inspector',             lo:795,  hi:795  },
+  { id:'environ',     label:'Phase I Environmental (ESA)', checked:true,  optional:false, lenderReq:true,  userCost:false, note:'Typically required by lenders; assesses environmental liability',    lo:2795, hi:2795 },
+  { id:'survey',      label:'Survey',                     checked:true,  optional:true,  lenderReq:false, userCost:false, note:'Optional if original survey is available',                           lo:1975, hi:3455 },
+  { id:'septic',      label:'Septic Inspection',          checked:true,  optional:true,  lenderReq:false, userCost:false, note:'Inspection only ($350) or full cleanout including inspection ($550)', lo:350,  hi:550  },
+  { id:'hvac',        label:'HVAC Assessment',            checked:false, optional:true,  lenderReq:false, userCost:true,  note:'Evaluation of heating, ventilation & air conditioning systems'                   },
+  { id:'plumbing',    label:'Plumbing Assessment',        checked:false, optional:true,  lenderReq:false, userCost:true,  note:'Assessment of plumbing systems, fixtures, and drainage'                        },
+  { id:'electrical',  label:'Electrical Assessment',      checked:false, optional:true,  lenderReq:false, userCost:true,  note:'Inspection of electrical panels, wiring, and systems'                          },
+  { id:'mold',        label:'Mold Assessment',            checked:false, optional:true,  lenderReq:false, userCost:true,  note:'Air quality and surface sampling for mold presence'                            },
+  { id:'leadpaint',   label:'Lead Paint Assessment',      checked:false, optional:true,  lenderReq:false, userCost:true,  note:'Testing for lead-based paint; common in pre-1978 buildings'                   },
+  { id:'asbestos',    label:'Asbestos Assessment',        checked:false, optional:true,  lenderReq:false, userCost:true,  note:'Sampling and analysis for asbestos-containing materials'                      }
+];
+
+// ── CLOSING COSTS ──────────────────────────────────────────────────────────
+const clItems = [
+  { id:'atty',      label:'Closing Attorney Fee',      checked:true,  optional:false, note:()=>'Split between buyer and seller',                                                                           calc:(pp,f)=>({lo:325,hi:325})          },
+  { id:'titleExam', label:'Title Exam',                checked:true,  optional:false, note:()=>'Buyer responsibility',                                                                                     calc:(pp,f)=>({lo:650,hi:650})          },
+  { id:'titleIns',  label:'Title Insurance',           checked:true,  optional:false, note:(f)=>f?'Based on purchase price (0.21%) + $250 for lender policy & CPL':'Based on purchase price (0.21%)',    calc:(pp,f)=>{const b=pp*0.0021;return{lo:b+(f?250:0),hi:b+(f?250:0)}}},
+  { id:'efile',     label:'E-File Fee',                checked:true,  optional:false, note:()=>'Split between buyer and seller',                                                                           calc:(pp,f)=>({lo:5,hi:5})              },
+  { id:'wiring',    label:'Wiring Fee',                checked:true,  optional:false, note:()=>'Split between buyer and seller',                                                                           calc:(pp,f)=>({lo:35,hi:35})            },
+  { id:'recording', label:'Recording Fees',            checked:true,  optional:false, note:(f)=>f?'Financed closing: typically 20–50 pages recorded':'Cash closing: typically 2–4 pages recorded',      calc:(pp,f)=>f?{lo:500,hi:1250}:{lo:50,hi:100}},
+  { id:'overnight', label:'Overnight / Mail-Away Fee', checked:false, optional:true,  note:()=>'Only if buyer does not close in person',                                                                   calc:(pp,f)=>({lo:75,hi:75})            }
+];
+
+// ── LENDER FEES ────────────────────────────────────────────────────────────
+const lnItems = [
+  { id:'origination', label:'Loan Origination Fee', checked:true, optional:true, lenderReq:false, note:'0.5%–1.0% of loan amount; some lenders waive entirely', calc:(loan)=>({lo:loan*0.005,hi:loan*0.01}) },
+  { id:'appraisal',   label:'Appraisal',            checked:true, optional:true, lenderReq:true,  note:'Ordered by lender; sometimes covered by lender',        calc:(loan)=>({lo:2000,hi:4000})             }
+];
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+const fmt = n => (n===undefined||n===null||isNaN(n)) ? '—' : '$'+Math.round(n).toLocaleString('en-US');
+const rng = (lo,hi) => Math.round(lo)!==Math.round(hi);
+const chk = (pre,id) => { const e=document.getElementById(`${pre}_${id}`); return e?e.checked:false; };
+const uCost = id => { const e=document.getElementById(`dd_cv_${id}`); if(!e)return 0; const r=e.value.replace(/[^0-9]/g,''); return r?parseInt(r,10):0; };
+
+function fmtPrice(el){ const r=el.value.replace(/[^0-9]/g,''); el.value=r?'$'+parseInt(r,10).toLocaleString('en-US'):''; calc(); }
+function fmtCost(el){ const r=el.value.replace(/[^0-9]/g,''); if(r)el.value=parseInt(r,10).toLocaleString('en-US'); calc(); }
+const getPrice = () => { const r=document.getElementById('purchasePrice').value.replace(/[^0-9]/g,''); return r?parseInt(r,10):0; };
+const getDPPct = () => parseInt(document.getElementById('dpSlider').value)/100;
+const getLoan  = pp => pp*(1-getDPPct());
+const badges = item => (item.optional?'<span class="badge b-opt">Optional</span>':'')+(item.lenderReq?'<span class="badge b-ldr">Lender Req.</span>':'');
+
+function syncSlider(){
+  const p=document.getElementById('dpSlider').value;
+  document.getElementById('dpPct').textContent=p+'%';
+  const pp=getPrice();
+  if(pp) document.getElementById('dpDollar').textContent=fmt(pp*parseInt(p)/100);
+  calc();
+}
+
+function setFin(val){
+  isFinanced=val;
+  document.getElementById('btnCash').classList.toggle('on',!val);
+  document.getElementById('btnLoan').classList.toggle('on',val);
+  document.getElementById('finSection').classList.toggle('vis',val);
+  document.getElementById('lnInputCard').style.display=val?'block':'none';
+  // refresh dynamic notes
+  ['titleIns','recording'].forEach(id=>{
+    const item=clItems.find(i=>i.id===id);
+    const el=document.getElementById('clnote_'+id);
+    if(el&&item) el.textContent=item.note(isFinanced);
+  });
+  calc();
+}
+
+// ── RENDER LEFT PANELS ─────────────────────────────────────────────────────
+function renderPanels(){
+  // Due Diligence
+  const std=ddItems.filter(i=>!i.userCost);
+  const spec=ddItems.filter(i=>i.userCost);
+  let ddHtml='<p style="font-size:13px;color:var(--slate);line-height:1.65;margin-bottom:12px">Standard items pre-selected. Specialist assessments are optional — enter cost if applicable.</p>';
+  ddHtml+='<div class="sec-div first">Standard Inspections</div>';
+  std.forEach(item=>{
+    const rangeTxt=item.lo===item.hi?fmt(item.lo):fmt(item.lo)+' – '+fmt(item.hi);
+    ddHtml+=`<div class="chk-item">
+      <input type="checkbox" id="dd_${item.id}" ${item.checked?'checked':''} onchange="calc()">
+      <div class="chk-body">
+        <div class="chk-top"><span class="chk-label">${item.label}${badges(item)}</span><span style="font-size:13px;font-weight:700;color:var(--slate);white-space:nowrap">${rangeTxt}</span></div>
+        <div class="chk-note">${item.note}</div>
+      </div>
+    </div>`;
+  });
+  ddHtml+='<div class="sec-div">Specialist Assessments</div>';
+  spec.forEach(item=>{
+    ddHtml+=`<div class="chk-item">
+      <input type="checkbox" id="dd_${item.id}" onchange="toggleSpec('dd_cr_${item.id}',this.checked);calc()">
+      <div class="chk-body">
+        <div class="chk-top"><span class="chk-label">${item.label}${badges(item)}</span></div>
+        <div class="chk-note">${item.note}</div>
+        <div class="chk-cost-row" id="dd_cr_${item.id}">
+          <label style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);display:block;margin-bottom:4px;margin-top:7px">Estimated Cost</label>
+          <div class="iwrap"><span class="ipfx">$</span><input type="text" class="pfx" id="dd_cv_${item.id}" placeholder="Enter cost" oninput="fmtCost(this)"></div>
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('ddPanel').innerHTML=ddHtml;
+
+  // Closing Costs
+  let clHtml='';
+  clItems.forEach(item=>{
+    clHtml+=`<div class="chk-item">
+      <input type="checkbox" id="cl_${item.id}" ${item.checked?'checked':''} onchange="calc()">
+      <div class="chk-body">
+        <div class="chk-top"><span class="chk-label">${item.label}${badges(item)}</span></div>
+        <div class="chk-note" id="clnote_${item.id}">${item.note(isFinanced)}</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('clPanel').innerHTML=clHtml;
+
+  // Lender Fees
+  let lnHtml='<p style="font-size:13px;color:var(--slate);line-height:1.65;margin-bottom:12px">Both fees assumed by default. Uncheck if your lender agrees to cover.</p>';
+  lnItems.forEach(item=>{
+    lnHtml+=`<div class="chk-item">
+      <input type="checkbox" id="ln_${item.id}" ${item.checked?'checked':''} onchange="calc()">
+      <div class="chk-body">
+        <div class="chk-top"><span class="chk-label">${item.label}${badges(item)}</span></div>
+        <div class="chk-note">${item.note}</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('lnPanel').innerHTML=lnHtml;
+}
+
+function toggleSpec(rowId, show){
+  const el=document.getElementById(rowId);
+  if(el) el.classList.toggle('vis',show);
+}
+
+// ── LINE ITEM HTML ─────────────────────────────────────────────────────────
+function liRow(name, noteTxt, lo, hi, active, badgeHtml=''){
+  if(!active) return `<div class="li"><div class="li-left"><div class="li-name" style="color:var(--light-gray)">${name}${badgeHtml}</div><div class="li-sub">${noteTxt}</div></div><div class="li-na">Not selected</div></div>`;
+  if(lo===0&&hi===0&&name.match(/Assessment/)) return `<div class="li"><div class="li-left"><div class="li-name">${name}${badgeHtml}</div><div class="li-sub">${noteTxt}</div></div><div class="li-enter">Enter cost →</div></div>`;
+  if(rng(lo,hi)) return `<div class="li"><div class="li-left"><div class="li-name">${name}${badgeHtml}</div><div class="li-sub">${noteTxt}</div></div><div class="li-vals"><div class="li-val v-lo">${fmt(lo)}</div><div class="li-val v-hi">${fmt(hi)}</div></div></div>`;
+  return `<div class="li"><div class="li-left"><div class="li-name">${name}${badgeHtml}</div><div class="li-sub">${noteTxt}</div></div><div class="li-vals"><div class="li-val v-fix">${fmt(lo)}</div></div></div>`;
+}
+
+// ── MAIN CALCULATE ─────────────────────────────────────────────────────────
+function calc(){ document.getElementById('results').innerHTML=buildResults(); }
+
+function buildResults(){
+  const pp=getPrice();
+  if(!pp) return `<div class="card"><div class="empty"><div class="empty-icon">📊</div><div class="empty-txt">Enter a purchase price to see your estimated costs</div></div></div>`;
+
+  const loan=isFinanced?getLoan(pp):0;
+
+  // ── Due Diligence totals ──
+  let ddLo=0,ddHi=0,ddHasRng=false,ddLines='';
+  ddItems.forEach(item=>{
+    const on=chk('dd',item.id);
+    let lo=0,hi=0;
+    if(on){
+      lo=item.userCost?uCost(item.id):item.lo;
+      hi=item.userCost?uCost(item.id):item.hi;
+      ddLo+=lo; ddHi+=hi;
+      if(rng(lo,hi)) ddHasRng=true;
+    }
+    ddLines+=liRow(item.label, item.note, lo, hi, on, badges(item));
+  });
+
+  // ── Closing totals ──
+  let clLo=0,clHi=0,clHasRng=false,clLines='';
+  clItems.forEach(item=>{
+    const on=chk('cl',item.id);
+    let lo=0,hi=0;
+    if(on){ const v=item.calc(pp,isFinanced); lo=v.lo; hi=v.hi; clLo+=lo; clHi+=hi; if(rng(lo,hi)) clHasRng=true; }
+    clLines+=liRow(item.label, item.note(isFinanced), lo, hi, on, badges(item));
+  });
+
+  // ── Lender totals ──
+  let lnLo=0,lnHi=0,lnHasRng=false,lnLines='',lnSection='';
+  if(isFinanced){
+    lnItems.forEach(item=>{
+      const on=chk('ln',item.id);
+      let lo=0,hi=0;
+      if(on){ const v=item.calc(loan); lo=v.lo; hi=v.hi; lnLo+=lo; lnHi+=hi; if(rng(lo,hi)) lnHasRng=true; }
+      lnLines+=liRow(item.label, item.note, lo, hi, on, badges(item));
+    });
+    const dp=pp*getDPPct();
+    lnSection=`
+    <div class="card">
+      <div class="ch"><div class="ci ci-b">🏦</div><div class="ct">Lender Fees</div></div>
+      <div class="cb">
+        <div class="lstat-grid" style="grid-template-columns:1fr 1fr">
+          <div class="lstat"><span class="lstat-v">${fmt(loan)}</span><span class="lstat-l">Loan Amount</span></div>
+          <div class="lstat"><span class="lstat-v">${fmt(dp)}</span><span class="lstat-l">Down Payment</span></div>
+        </div>
+        ${lnHasRng?`<div class="rng-hdr"><span class="rh-lo">Low</span><span class="rh-hi">High</span></div>`:''}
+        ${lnLines}
+        <div class="sub-row">
+          <span class="sub-lbl">Lender Subtotal</span>
+          <div class="sub-vals">
+            ${lnHasRng?`<span class="sub-v sv-lo">${fmt(lnLo)}</span><span class="sub-v sv-hi">${fmt(lnHi)}</span>`:`<span class="sub-v" style="color:var(--charcoal)">${fmt(lnLo)}</span>`}
+          </div>
+        </div>
+        <div style="margin-top:10px;padding:10px 14px;background:var(--blue-light);border-radius:7px;font-size:13px;color:var(--slate);line-height:1.65">
+          <strong style="color:var(--blue)">Note:</strong> Lender fees may be paid at closing or rolled into the loan. Uncheck items in the left panel if your lender covers them.
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── Summary Tiles ──
+  const totalLo=ddLo+clLo+lnLo;
+  const totalHi=ddHi+clHi+lnHi;
+  const anyRng=ddHasRng||clHasRng||lnHasRng;
+  const dp = isFinanced ? pp*getDPPct() : 0;
+  const cashToCloseLo = totalLo + (isFinanced ? dp : pp);
+  const cashToCloseHi = totalHi + (isFinanced ? dp : pp);
+
+  function tileHtml(icon, label, lo, hi, hasRng, isTotalTile=false) {
+    const cls = isTotalTile ? 'stile-total' : 'stile';
+    if (hasRng) {
+      return `<div class="${cls}">
+        <span class="stile-icon">${icon}</span>
+        <span class="stile-label">${label}</span>
+        <div class="stile-val-wrap">
+          <span class="stile-val lo">${fmt(lo)}</span>
+          <span class="stile-val hi">▲ ${fmt(hi)}</span>
+        </div>
+      </div>`;
+    }
+    return `<div class="${cls}">
+      <span class="stile-icon">${icon}</span>
+      <span class="stile-label">${label}</span>
+      <div class="stile-val-wrap">
+        <span class="stile-val fixed">${fmt(lo)}</span>
+      </div>
+    </div>`;
+  }
+
+  const tileCount = isFinanced ? 5 : 4;
+  const tilesClass = tileCount === 5 ? 'tiles-5' : 'tiles-4';
+
+  const dpTile = isFinanced
+    ? tileHtml('💰', 'Down Payment', dp, dp, false)
+    : tileHtml('💵', 'Cash Payment', pp, pp, false);
+
+  const lnTile = isFinanced ? tileHtml('🏦', 'Lender Fees', lnLo, lnHi, lnHasRng) : '';
+
+  const totalTile = tileHtml(
+    '🧾',
+    isFinanced ? 'Total Cash to Close' : 'Total Cash to Close',
+    cashToCloseLo,
+    cashToCloseHi,
+    anyRng,
+    true
+  );
+
+  const grandTotal = `
+    <div class="summary-bar ${tilesClass}">
+      ${tileHtml('🔍', 'Due Diligence', ddLo, ddHi, ddHasRng)}
+      ${tileHtml('📋', 'Closing Costs', clLo, clHi, clHasRng)}
+      ${lnTile}
+      ${dpTile}
+      ${totalTile}
+    </div>`;
+
+  // ── Detail cards ──
+  const ddCard=`
+    <div class="card">
+      <div class="ch"><div class="ci ci-a">🔍</div><div class="ct">Due Diligence Detail</div></div>
+      <div class="cb">
+        ${ddHasRng?`<div class="rng-hdr"><span class="rh-lo">Low</span><span class="rh-hi">High</span></div>`:''}
+        ${ddLines}
+        <div class="sub-row"><span class="sub-lbl">Diligence Subtotal</span><div class="sub-vals">
+          ${ddHasRng?`<span class="sub-v sv-lo">${fmt(ddLo)}</span><span class="sub-v sv-hi">${fmt(ddHi)}</span>`:`<span class="sub-v" style="color:var(--charcoal)">${fmt(ddLo)}</span>`}
+        </div></div>
+      </div>
+    </div>`;
+
+  const clCard=`
+    <div class="card">
+      <div class="ch"><div class="ci ci-g">📋</div><div class="ct">Closing Costs Detail</div></div>
+      <div class="cb">
+        ${clHasRng?`<div class="rng-hdr"><span class="rh-lo">Low</span><span class="rh-hi">High</span></div>`:''}
+        ${clLines}
+        <div class="sub-row"><span class="sub-lbl">Closing Subtotal</span><div class="sub-vals">
+          ${clHasRng?`<span class="sub-v sv-lo">${fmt(clLo)}</span><span class="sub-v sv-hi">${fmt(clHi)}</span>`:`<span class="sub-v" style="color:var(--charcoal)">${fmt(clLo)}</span>`}
+        </div></div>
+      </div>
+    </div>`;
+
+  const disc=`<div class="disc">All figures are estimates based on typical commercial real estate transactions in metro Atlanta. Actual costs vary by property type, transaction complexity, lender requirements, and service provider rates. This tool does not constitute a Good Faith Estimate, Loan Estimate, or Closing Disclosure. Consult your attorney and lender for precise figures.</div>`;
+
+  return grandTotal + ddCard + clCard + lnSection + disc;
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+renderPanels();
+</script>
+</body>
+</html>
